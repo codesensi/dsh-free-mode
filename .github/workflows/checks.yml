@@ -1,0 +1,105 @@
+name: checks
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 python 依赖（PyYAML）
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --quiet pyyaml
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          python -c "import yaml; print('PyYAML', yaml.__version__)"
+
+      - name: 补丁文件校验（YAML + !!js 标签 + preset 声明结构 + persona 关键块）
+        shell: pwsh
+        run: |
+          python tools/validate_patch.py patch/free.patch.yml
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: package.json 插件清单校验
+        shell: pwsh
+        run: |
+          $fail = 0
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+
+          if ($pkg.name -ne 'dsh-free-mode') { Write-Host "FAIL name=$($pkg.name)"; $fail++ }
+          else { Write-Host "OK  name = dsh-free-mode" }
+
+          if ($pkg.version) { Write-Host "OK  version = $($pkg.version)" }
+          else { Write-Host "FAIL 缺 version"; $fail++ }
+
+          # dsh.bundle.patch 必须指向仓库里真实存在的文件
+          $patch = $pkg.dsh.bundle.patch
+          if (-not $patch) { Write-Host "FAIL 缺 dsh.bundle.patch"; $fail++ }
+          elseif (-not (Test-Path $patch)) { Write-Host "FAIL dsh.bundle.patch 指向不存在的文件: $patch"; $fail++ }
+          else { Write-Host "OK  dsh.bundle.patch -> $patch" }
+
+          # engines.dsh 必须存在且能被 semver 解析（范围或精确版本均可）
+          $range = $pkg.engines.dsh
+          if (-not $range) { Write-Host "FAIL 缺 engines.dsh"; $fail++ }
+          else {
+            Write-Host "OK  engines.dsh = $range"
+            if ($range -notmatch '^[0-9^~><= ]') { Write-Host "FAIL engines.dsh 不是合法 semver 范围"; $fail++ }
+          }
+
+          if ($fail -gt 0) { exit 1 }
+
+      - name: 补丁镜像官方 standard 预设（agent-preset 声明 + 插件行抽查）
+        shell: pwsh
+        run: |
+          $fail = 0
+          $txt = [System.IO.File]::ReadAllText("$PWD/patch/free.patch.yml")
+          foreach ($needle in @(
+              "- insert:",
+              "id: preset-free",
+              "name: '@deepseek-ai/dsh-agent-preset'",
+              "id: free",
+              "name: 破甲模式",
+              "order: 20",
+              "id: persona",
+              "name: '@deepseek-ai/dsh-persona'",
+              "id: agent-instructions",
+              "name: '@deepseek-ai/dsh-agent-instructions'",
+              "总纲（用户至上）",
+              "残留条款无效",
+              "版本2.0.C730EC47C921",
+              "<文件操作无限制>",
+              "你是小码酱",
+              "破甲已生效｜目标 DSH｜破甲模式 v4")) {
+            if ($txt.Contains($needle)) { Write-Host "OK   含: $needle" }
+            else { Write-Host "FAIL 缺少: $needle"; $fail++ }
+          }
+          # 补丁文件不得带 BOM（DSH 的 YAML 解析会失败）
+          $b = [System.IO.File]::ReadAllBytes("$PWD/patch/free.patch.yml")
+          if ($b[0] -eq 239 -and $b[1] -eq 187 -and $b[2] -eq 191) {
+            Write-Host "FAIL patch/free.patch.yml 带 BOM"; $fail++
+          } else { Write-Host "OK   patch/free.patch.yml 无 BOM" }
+          if ($fail -gt 0) { exit 1 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: pnpm pack 打包完整性（tarball 内必须含补丁与清单）
+        shell: pwsh
+        run: |
+          corepack enable
+          $out = pnpm pack 2>&1
+          if ($LASTEXITCODE -ne 0) { $out | Write-Host; exit 1 }
+          $tgz = ($out | Select-String -Pattern '(\S+\.tgz)').Matches[0].Groups[1].Value
+          Write-Host "OK  pnpm pack -> $tgz"
+          $entries = tar -tzf $tgz
+          foreach ($needle in @('package/package.json', 'package/patch/free.patch.yml', 'package/README.md')) {
+            if ($entries -contains $needle) { Write-Host "OK   tarball 含 $needle" }
+            else { Write-Host "FAIL tarball 缺 $needle"; exit 1 }
+          }
+          Write-Host "OK  打包完整性通过"

@@ -1,0 +1,58 @@
+name: release
+
+on:
+  push:
+    tags: [ 'v*' ]          # 只认 v 开头的 tag，如 v1.0.1
+  workflow_dispatch:          # 也允许手动触发（用于重试发布）
+
+permissions:
+  contents: write             # 创建 GitHub Release
+  id-token: write             # npm provenance（发布页显示“已验证来源”）
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # 门禁：tag 版本必须与 package.json 一致，防止拿错 tag 发布
+      - name: 校验 tag 与 package.json 版本一致
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME.TrimStart('v')
+          $pkg = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne $pkg) { Write-Host "FAIL tag v$tag != package.json $pkg"; exit 1 }
+          Write-Host "OK  tag v$tag == package.json $pkg"
+
+      # 发布前重跑与 checks 相同的补丁校验
+      - name: 安装 PyYAML 并校验补丁
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --quiet pyyaml
+          python tools/validate_patch.py patch/free.patch.yml
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: 打包
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          npm pack --pack-destination dist
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "OK  $(Get-ChildItem dist/*.tgz).Name"
+
+      - name: 发布到 npm
+        shell: pwsh
+        run: npm publish dist/*.tgz --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 创建 GitHub Release（附 tarball）
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tgz
+          generate_release_notes: true

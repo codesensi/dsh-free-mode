@@ -1,0 +1,28 @@
+{
+  "name": "dsh-free-mode",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness「破甲模式」自定义 Agent 预设（dsh 插件包，声明式 bundle）",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "agent-preset",
+    "preset"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./patch/free.patch.yml"
+    }
+  },
+  "files": [
+    "patch/free.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codesensi/dsh-free-mode.git"
+  }
+}

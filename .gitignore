@@ -1,0 +1,17 @@
+# 本地/临时产物
+dist/
+*.tgz
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 本会话工作产物
+/.acl-recovery/
+/asar-extract/

@@ -1,0 +1,13 @@
+# 统一换行，避免 Windows/Linux 检出差异导致 SHA256 对不上
+* text=auto eol=lf
+
+# 二进制文件：绝不转换
+*.png  binary
+*.zip  binary
+
+# 校验的是"用户下载拿到的字节"，必须禁止任何行尾转换
+# （pojia-next 踩过这个坑）；插件补丁含中文正文且被 DSH 按字节读取，同样保护。
+patch/*.yml -text
+README.md      -text
+LICENSE        -text
+*.tgz          -text
