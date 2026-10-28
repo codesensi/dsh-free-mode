@@ -62,8 +62,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
-          # checkout 的 fetch-depth:1 可能不带回标签对象，先显式取回当前 tag
-          git fetch origin "refs/tags/$env:GITHUB_REF_NAME" --no-tags --force
+          # checkout 的 fetch-depth:1 只写下指向 commit 的轻量引用，不带回
+          # 标签对象 —— 必须带目标引用强制覆盖，否则 fetch 是无效操作
+          git fetch --force origin "refs/tags/$env:GITHUB_REF_NAME:refs/tags/$env:GITHUB_REF_NAME" --no-tags
           # 轻量 tag（git tag 无 -a）没有标签对象，contents 会回退成提交说明，
           # 必须区分：仅 annotated tag 的附言作正文，轻量则置空走自动生成
           $type = git cat-file -t "refs/tags/$env:GITHUB_REF_NAME"
