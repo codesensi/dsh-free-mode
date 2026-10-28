@@ -94,6 +94,7 @@ jobs:
         run: |
           # 用 npm pack（等价 pnpm pack 且无 corepack 下载噪声）；
           # 不解析命令输出，直接枚举产物文件，避免把日志里的 .tgz 误当结果
+          New-Item -ItemType Directory dist -Force | Out-Null
           npm pack --pack-destination dist
           if ($LASTEXITCODE -ne 0) { exit 1 }
           $tgz = Get-ChildItem dist -Filter *.tgz | Select-Object -First 1
