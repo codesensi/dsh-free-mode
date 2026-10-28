@@ -63,9 +63,20 @@ jobs:
         id: notes
         shell: pwsh
         run: |
-          $msg = git tag -l --format='%(contents)' $env:GITHUB_REF_NAME
+          # 轻量 tag（git tag 无 -a）没有标签对象，%(contents) 会回退成
+          # 所指 commit 的提交说明 —— 必须区分，轻量时置空走自动生成
+          $type = git cat-file -t "refs/tags/$env:GITHUB_REF_NAME"
+          if ($type -ne 'tag') {
+            Write-Host "WARN 轻量 tag 无附言，Release 正文退回自动生成（下次请用 git tag -a -m）"
+            "body<<EOF" >> $env:GITHUB_OUTPUT
+            "EOF" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          $subject = (git tag -l --format='%(contents:subject)' $env:GITHUB_REF_NAME) -join "`n"
+          $body = (git tag -l --format='%(contents:body)' $env:GITHUB_REF_NAME) -join "`n"
+          $full = ($subject + "`n`n" + $body).Trim()
           "body<<EOF" >> $env:GITHUB_OUTPUT
-          $msg >> $env:GITHUB_OUTPUT
+          $full >> $env:GITHUB_OUTPUT
           "EOF" >> $env:GITHUB_OUTPUT
 
       - name: 创建 GitHub Release（附 tarball）
