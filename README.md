@@ -43,6 +43,50 @@ python tools/validate_patch.py patch/free.patch.yml
 pnpm pack
 ```
 
+## 版本发布
+
+本仓库通过 GitHub Actions 自动发布：推送 `v` 开头的 tag，即自动完成 **npm 发布 + GitHub Release**（附 tarball）。
+
+### 日常发版
+
+```bash
+# 1. 升版本号（自动修改 package.json 并打 tag）
+pnpm version patch   # 1.0.0 → 1.0.1：补丁内容修订
+# pnpm version minor # → 1.1.0：新增预设/功能
+# pnpm version major # → 2.0.0：破坏性变更
+
+# 2. 推送（--follow-tags 连同 tag 一起推）
+git push --follow-tags
+```
+
+推送 tag 后 `release.yml` 自动执行：tag 与 `package.json` 版本一致性校验 → 补丁校验 → `npm pack` → `npm publish` → 创建 GitHub Release（附 tarball）。
+
+### 手动发版（等价）
+
+```bash
+git tag v1.2.0 && git push origin v1.2.0
+```
+
+tag 必须与 `package.json` 的 `version` 一致，否则工作流直接失败。
+
+### 前置配置（维护者一次性操作）
+
+1. npmjs.com 生成 **Granular Access Token**（仅勾选本包、Read and write；首次发布前包尚不存在时，可先手动 `npm publish` 一次再生成包级令牌）；
+2. 仓库 Settings → Secrets and variables → Actions → 新建 Secret `NPM_TOKEN`；
+3. （可选）npm 账号绑定 GitHub 以启用 `--provenance` 构建来源徽章。
+
+### 手动重试
+
+发布中途失败（如 npm 校验抖动）时，修复后到仓库 Actions 页面选择 `release` 工作流 → Run workflow 手动重跑，跳过 tag 门禁只重发 npm。
+
+### 版本号约定
+
+| 变更内容 | 版本动作 |
+|---|---|
+| 修改 `patch/free.patch.yml` 正文或措辞 | patch（同时可同步更新正文里的内部版本标记 `版本2.0.*`） |
+| 新增 preset、放宽 `engines.dsh` 下界 | minor |
+| 不再兼容某个 DSH 大版本 / 移除预设 | major |
+
 ## License
 
 [MIT](LICENSE)
