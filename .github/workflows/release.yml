@@ -20,8 +20,10 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      # 门禁：tag 版本必须与 package.json 一致，防止拿错 tag 发布
+      # 门禁：tag 版本必须与 package.json 一致，防止拿错 tag发布
+      # （仅 tag 触发时校验；workflow_dispatch 手动重跑时 ref 是分支名，跳过）
       - name: 校验 tag 与 package.json 版本一致
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
           $tag = $env:GITHUB_REF_NAME.TrimStart('v')
@@ -47,11 +49,17 @@ jobs:
 
       - name: 发布到 npm
         shell: pwsh
-        run: npm publish dist/*.tgz --access public --provenance
+        run: |
+          # PowerShell 不展开通配符，必须先解析出真实路径再传给 npm
+          # （否则 npm 把 "dist/*.tgz" 当 git spec 解析，报 Permission denied）
+          $tgz = Get-ChildItem dist -Filter *.tgz | Select-Object -First 1
+          if (-not $tgz) { Write-Host "FAIL 未找到 tarball"; exit 1 }
+          npm publish $tgz.FullName --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 创建 GitHub Release（附 tarball）
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.tgz
