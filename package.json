@@ -1,6 +1,6 @@
 {
   "name": "dsh-free-mode",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "DeepSeek Harness「破甲模式」自定义 Agent 预设（dsh 插件包，声明式 bundle）",
   "license": "MIT",
   "type": "module",

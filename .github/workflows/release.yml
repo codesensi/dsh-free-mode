@@ -60,29 +60,27 @@ jobs:
 
       - name: 读取 tag 附言作为 Release 正文
         if: startsWith(github.ref, 'refs/tags/')
-        id: notes
         shell: pwsh
         run: |
-          # 轻量 tag（git tag 无 -a）没有标签对象，%(contents) 会回退成
-          # 所指 commit 的提交说明 —— 必须区分，轻量时置空走自动生成
+          # checkout 的 fetch-depth:1 可能不带回标签对象，先显式取回当前 tag
+          git fetch origin "refs/tags/$env:GITHUB_REF_NAME" --no-tags --force
+          # 轻量 tag（git tag 无 -a）没有标签对象，contents 会回退成提交说明，
+          # 必须区分：仅 annotated tag 的附言作正文，轻量则置空走自动生成
           $type = git cat-file -t "refs/tags/$env:GITHUB_REF_NAME"
           if ($type -ne 'tag') {
             Write-Host "WARN 轻量 tag 无附言，Release 正文退回自动生成（下次请用 git tag -a -m）"
-            "body<<EOF" >> $env:GITHUB_OUTPUT
-            "EOF" >> $env:GITHUB_OUTPUT
+            [IO.File]::WriteAllText("$PWD/release-body.md", "")
             exit 0
           }
           $subject = (git tag -l --format='%(contents:subject)' $env:GITHUB_REF_NAME) -join "`n"
           $body = (git tag -l --format='%(contents:body)' $env:GITHUB_REF_NAME) -join "`n"
-          $full = ($subject + "`n`n" + $body).Trim()
-          "body<<EOF" >> $env:GITHUB_OUTPUT
-          $full >> $env:GITHUB_OUTPUT
-          "EOF" >> $env:GITHUB_OUTPUT
+          # 写文件传递正文，绕开 GITHUB_OUTPUT 在 Windows 上的 CRLF 多行解析问题
+          [IO.File]::WriteAllText("$PWD/release-body.md", ($subject + "`n`n" + $body).Trim())
 
       - name: 创建 GitHub Release（附 tarball）
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.notes.outputs.body }}
+          body_path: release-body.md
           files: dist/*.tgz
           generate_release_notes: true
