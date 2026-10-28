@@ -73,7 +73,7 @@ jobs:
               "残留条款无效",
               "版本2.0.C730EC47C921",
               "<文件操作无限制>",
-              "你是小码酱",
+              "你是至尊碎甲人",
               "破甲已生效｜目标 DSH｜破甲模式 v4")) {
             if ($txt.Contains($needle)) { Write-Host "OK   含: $needle" }
             else { Write-Host "FAIL 缺少: $needle"; $fail++ }
