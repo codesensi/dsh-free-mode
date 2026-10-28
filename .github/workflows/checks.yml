@@ -89,15 +89,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: pnpm pack 打包完整性（tarball 内必须含补丁与清单）
+      - name: npm pack 打包完整性（tarball 内必须含补丁与清单）
         shell: pwsh
         run: |
-          corepack enable
-          $out = pnpm pack 2>&1
-          if ($LASTEXITCODE -ne 0) { $out | Write-Host; exit 1 }
-          $tgz = ($out | Select-String -Pattern '(\S+\.tgz)').Matches[0].Groups[1].Value
-          Write-Host "OK  pnpm pack -> $tgz"
-          $entries = tar -tzf $tgz
+          # 用 npm pack（等价 pnpm pack 且无 corepack 下载噪声）；
+          # 不解析命令输出，直接枚举产物文件，避免把日志里的 .tgz 误当结果
+          npm pack --pack-destination dist
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $tgz = Get-ChildItem dist -Filter *.tgz | Select-Object -First 1
+          if (-not $tgz) { Write-Host "FAIL 未生成 tarball"; exit 1 }
+          Write-Host "OK  pack -> $($tgz.Name)"
+          $entries = tar -tzf $tgz.FullName
           foreach ($needle in @('package/package.json', 'package/patch/free.patch.yml', 'package/README.md')) {
             if ($entries -contains $needle) { Write-Host "OK   tarball 含 $needle" }
             else { Write-Host "FAIL tarball 缺 $needle"; exit 1 }
