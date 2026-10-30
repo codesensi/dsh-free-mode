@@ -6,12 +6,12 @@ DeepSeek Harness（DSH）「自在模式」自定义 Agent 预设 —— **纯 D
 
 ## 上游仓库
 
-本项目的预设正文源自上游 **[z91772524-ai/dsh-pojia-mode](https://github.com/z91772524-ai/dsh-pojia-mode)**（破甲模式 v1.1）的重新打包：将其安装器落盘的预设内容改为纯声明式插件 bundle（`dsh.bundle.patch`），不再携带任何脚本/安装器，并随 npm 包版本持续更新。
+本项目的预设正文重新打包自上游 **[z91772524-ai/dsh-pojia-mode](https://github.com/z91772524-ai/dsh-pojia-mode)**（破甲模式 v1.1）：将其安装器落盘的预设内容改为纯声明式插件 bundle（`dsh.bundle.patch`），不再携带任何脚本/安装器，并随 npm 包版本持续更新。
 
 **与上游并存时的注意事项**：
 
 - 上游安装器会把预设写入 `$DSH_HOME/.agent-presets/pj-mode`，与本插件的 `preset-free` 是两个独立声明，**可以共存、互不覆盖**；
-- 但两者显示名均为「破甲/自在」类预设名，同时安装会在模式选择器里出现**两个同类条目**，且上游那份落盘后不会随本插件更新；
+- 但两者显示名同类（上游为「破甲模式」，本插件为「自在模式」），同时安装会在模式选择器里出现**两个同类条目**，且上游那份落盘后不会随本插件更新；
 - 若曾安装过上游版本，建议先删除 `$DSH_HOME/.agent-presets/` 下对应目录（如 `pj-mode`）再使用本插件，只保留一份、便于随版本升级。
 
 ## 环境要求
@@ -38,7 +38,6 @@ dsh plugin remove dsh-free-mode
 ```
 
 卸载后重启 DSH，`preset-free` 声明随插件包一并移除。
-
 
 ## 版本兼容性说明
 
@@ -88,7 +87,7 @@ tag 必须与 `package.json` 的 `version` 一致，否则工作流直接失败�
 
 ### 手动重试
 
-发布中途失败（如 npm 校验抖动）时，修复后到仓库 Actions 页面选择 `release` 工作流 → Run workflow 手动重跑，跳过 tag 门禁只重发 npm。
+发布中途失败（如 npm 校验抖动）时，修复后到仓库 Actions 页面选择 `release` 工作流 → Run workflow 手动重跑，跳过 tag 门禁，只重发 npm。
 
 ### 版本号约定
 
