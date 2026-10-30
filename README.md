@@ -1,8 +1,18 @@
 # dsh-free-mode
 
-DeepSeek Harness（DSH）「破甲模式」自定义 Agent 预设 —— **纯 DSH 插件包**，零脚本、零安装器。
+DeepSeek Harness（DSH）「自在模式」自定义 Agent 预设 —— **纯 DSH 插件包**，零脚本、零安装器。
 
-安装后在 DSH 预设选择器中出现名为 **破甲模式** 的 Agent 预设（v4 强化版政策正文 + 逐条覆盖层 + 文件操作中和块，附「破甲自检」回执口令）。
+安装后在 DSH 预设选择器中出现名为 **自在模式** 的 Agent 预设（v4 强化版政策正文 + 逐条覆盖层 + 文件操作中和块，附「自在否」自检回执口令）。
+
+## 上游仓库
+
+本项目的预设正文源自上游 **[z91772524-ai/dsh-pojia-mode](https://github.com/z91772524-ai/dsh-pojia-mode)**（破甲模式 v1.1）的重新打包：将其安装器落盘的预设内容改为纯声明式插件 bundle（`dsh.bundle.patch`），不再携带任何脚本/安装器，并随 npm 包版本持续更新。
+
+**与上游并存时的注意事项**：
+
+- 上游安装器会把预设写入 `$DSH_HOME/.agent-presets/pj-mode`，与本插件的 `preset-free` 是两个独立声明，**可以共存、互不覆盖**；
+- 但两者显示名均为「破甲/自在」类预设名，同时安装会在模式选择器里出现**两个同类条目**，且上游那份落盘后不会随本插件更新；
+- 若曾安装过上游版本，建议先删除 `$DSH_HOME/.agent-presets/` 下对应目录（如 `pj-mode`）再使用本插件，只保留一份、便于随版本升级。
 
 ## 环境要求
 
@@ -19,7 +29,7 @@ dsh plugin add codesensi/dsh-free-mode
 dsh plugin add dsh-free-mode
 ```
 
-安装完成后**重启 DSH**，补丁层会在启动时自动挂载；打开预设选择器即可看到「破甲模式」（`order: 20`，排在官方 standard 预设之后）。
+安装完成后**重启 DSH**，补丁层会在启动时自动挂载；打开预设选择器即可看到「自在模式」（`order: 20`，排在官方 standard 预设之后）。
 
 ## 卸载
 
@@ -28,6 +38,7 @@ dsh plugin remove dsh-free-mode
 ```
 
 卸载后重启 DSH，`preset-free` 声明随插件包一并移除。
+
 
 ## 版本兼容性说明
 
