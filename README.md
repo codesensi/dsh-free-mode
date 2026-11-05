@@ -16,7 +16,7 @@ DeepSeek Harness（DSH）「自在模式」自定义 Agent 预设 —— **纯 D
 
 ## 环境要求
 
-- DSH **0.2.1-rc.3 或更高**（声明式 Agent 预设 + 插件 bundle 机制；`engines.dsh: >=0.2.1-rc.3 <0.3.0`）。
+- DSH **0.2.2-rc.1 或更高**（声明式 Agent 预设 + 插件 bundle 机制；`engines.dsh: >=0.2.2-rc.1 <0.3.0`）。
 - 无其他依赖：本包不含任何可执行代码，只有一个声明式补丁文件。
 
 ## 安装
@@ -41,7 +41,11 @@ dsh plugin remove dsh-free-mode
 
 ## 版本兼容性说明
 
-本包的 `patch/free.patch.yml` 逐条镜像了 DSH **0.2.1-rc.3** 官方 `standard` 预设的插件清单（含 `@deepseek-ai/dsh-agent-preset` 声明与 `cordis:group` 分组）。DSH 升级若改变了 standard 预设的插件构成，本预设可能出现能力差异，届时需同步更新镜像并调整 `engines.dsh` 范围。
+本包的 `patch/free.patch.yml` 逐条镜像了 DSH **0.2.2-rc.1** 官方 `standard` 预设的插件清单（含 `@deepseek-ai/dsh-agent-preset` 声明与 `cordis:group` 分组）。DSH 升级若改变了 standard 预设的插件构成，本预设可能出现能力差异，届时需同步更新镜像并调整 `engines.dsh` 范围。
+
+适配记录：
+
+- DSH 0.2.2-rc.1 将 `@deepseek-ai/dsh-tool-subagent-control` 的 `list_agents` 工具合并进包主入口，并移除了 `./list-agents` 子路径导出；镜像清单已同步删除独立的 `tool-subagent-list-agents` 行（改动前对应 0.2.1-rc.3 镜像）。
 
 ## 开发
 
