@@ -16,7 +16,7 @@ DeepSeek Harness（DSH）「自在模式」自定义 Agent 预设 —— **纯 D
 
 ## 环境要求
 
-- DSH **0.2.2-rc.1 或更高**（声明式 Agent 预设 + 插件 bundle 机制；`engines.dsh: >=0.2.2-rc.1 <0.3.0`）。
+- DSH **0.2.1-rc.3 或更高**（声明式 Agent 预设 + 插件 bundle 机制；`engines.dsh: >=0.2.1-rc.3 <0.3.0`）。
 - 无其他依赖：本包不含任何可执行代码，只有一个声明式补丁文件。
 
 ## 安装
